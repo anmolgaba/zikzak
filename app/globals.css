@@ -1,0 +1,5 @@
+* { box-sizing: border-box; }
+
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #000; }
+
+canvas, [role="application"] { display: block; width: 100%; height: 100%; background: #000; }
