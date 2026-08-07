@@ -2,7 +2,7 @@
 
 import { Howl } from "howler";
 import type { Application, Graphics } from "pixi.js";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type KeyConfig = { color: string; sound: string };
 type Circle = { graphic: Graphics; hue: number; saturation: number; lightness: number };
@@ -47,6 +47,7 @@ function hslToHex(hue: number, saturation: number, lightness: number) {
 
 export default function Home() {
   const stageRef = useRef<HTMLDivElement>(null);
+  const [hasPressedKey, setHasPressedKey] = useState(false);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -66,15 +67,17 @@ export default function Home() {
       stage.append(app.canvas);
 
       const handleKeyDown = (event: KeyboardEvent) => {
-        const keyConfig = KEY_DATA[event.key];
+        const key = event.key.toLowerCase();
+        const keyConfig = KEY_DATA[key];
         if (!keyConfig || !app) return;
+        setHasPressedKey(true);
         const color = hexToHsl(keyConfig.color);
         const graphic = new PIXI.Graphics().circle(0, 0, 500).fill(0xffffff);
         graphic.tint = hslToHex(color.hue, color.saturation, color.lightness);
         graphic.position.set(Math.random() * app.screen.width, Math.random() * app.screen.height);
         app.stage.addChild(graphic);
         circles.push({ graphic, ...color });
-        sounds[event.key].play();
+        sounds[key].play();
       };
 
       app.ticker.add((ticker) => {
@@ -105,5 +108,15 @@ export default function Home() {
     };
   }, []);
 
-  return <div ref={stageRef} aria-label="Interactive sound circles" role="application" />;
+  return (
+    <div ref={stageRef} aria-label="Interactive sound circles" role="application">
+      <p
+        aria-hidden={hasPressedKey}
+        className={`keyboard-prompt${hasPressedKey ? " keyboard-prompt--dismissed" : ""}`}
+        role="status"
+      >
+        Press any key from A to Z, and turn up the speakers
+      </p>
+    </div>
+  );
 }
