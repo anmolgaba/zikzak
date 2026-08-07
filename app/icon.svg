@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <pattern id="dither" width="6" height="6" patternUnits="userSpaceOnUse">
+      <rect width="6" height="6" fill="#e83b32"/>
+      <rect width="2" height="2" x="1" y="1" fill="#ff766b" opacity=".7"/>
+      <rect width="1" height="1" x="5" y="5" fill="#9f1519" opacity=".72"/>
+    </pattern>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#15100f"/>
+  <path d="M15 17h34L33 32l16 15H15l16-15z" fill="url(#dither)"/>
+  <circle cx="23" cy="25" r="2" fill="#fff2ed" opacity=".9"/>
+  <circle cx="41" cy="39" r="2" fill="#fff2ed" opacity=".9"/>
+</svg>
