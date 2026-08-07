@@ -22,6 +22,7 @@ const KEY_DATA: Record<string, KeyConfig> = {
   v: { sound: "veil.mp3", color: "#27ae60" }, b: { sound: "wipe.mp3", color: "#2980b9" },
   n: { sound: "zig-zag.mp3", color: "#8e44ad" }, m: { sound: "moon.mp3", color: "#2c3e50" },
 };
+const KEYS = Object.keys(KEY_DATA);
 
 function hexToHsl(hex: string) {
   const value = Number.parseInt(hex.slice(1), 16);
@@ -54,7 +55,7 @@ export default function Home() {
     if (!stage) return;
     let app: Application | undefined;
     let cancelled = false;
-    let removeKeyListener = () => {};
+    let removeInputListeners = () => {};
     const circles: Circle[] = [];
     const sounds = Object.fromEntries(Object.entries(KEY_DATA).map(([key, { sound }]) => [key, new Howl({ src: [`/sounds/${sound}`] })])) as Record<string, Howl>;
 
@@ -66,18 +67,34 @@ export default function Home() {
       if (cancelled) { app.destroy(true, { children: true }); return; }
       stage.append(app.canvas);
 
-      const handleKeyDown = (event: KeyboardEvent) => {
-        const key = event.key.toLowerCase();
+      const triggerEffect = (key: string, x: number, y: number) => {
         const keyConfig = KEY_DATA[key];
         if (!keyConfig || !app) return;
         setHasPressedKey(true);
         const color = hexToHsl(keyConfig.color);
         const graphic = new PIXI.Graphics().circle(0, 0, 500).fill(0xffffff);
         graphic.tint = hslToHex(color.hue, color.saturation, color.lightness);
-        graphic.position.set(Math.random() * app.screen.width, Math.random() * app.screen.height);
+        graphic.position.set(x, y);
         app.stage.addChild(graphic);
         circles.push({ graphic, ...color });
         sounds[key].play();
+      };
+
+      const handleKeyDown = (event: KeyboardEvent) => {
+        const pixiApp = app;
+        if (!pixiApp) return;
+        const key = event.key.toLowerCase();
+        triggerEffect(key, Math.random() * pixiApp.screen.width, Math.random() * pixiApp.screen.height);
+      };
+
+      const handlePointerDown = (event: PointerEvent) => {
+        const pixiApp = app;
+        if (event.pointerType !== "touch" || !pixiApp) return;
+        const bounds = pixiApp.canvas.getBoundingClientRect();
+        const x = (event.clientX - bounds.left) * (pixiApp.screen.width / bounds.width);
+        const y = (event.clientY - bounds.top) * (pixiApp.screen.height / bounds.height);
+        const key = KEYS[Math.floor(Math.random() * KEYS.length)];
+        triggerEffect(key, x, y);
       };
 
       app.ticker.add((ticker) => {
@@ -95,13 +112,17 @@ export default function Home() {
       });
 
       window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
+      app.canvas.addEventListener("pointerdown", handlePointerDown);
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+        app?.canvas.removeEventListener("pointerdown", handlePointerDown);
+      };
     };
 
-    void start().then((removeListener) => { if (removeListener) removeKeyListener = removeListener; });
+    void start().then((removeListeners) => { if (removeListeners) removeInputListeners = removeListeners; });
     return () => {
       cancelled = true;
-      removeKeyListener();
+      removeInputListeners();
       circles.forEach(({ graphic }) => graphic.destroy());
       Object.values(sounds).forEach((sound) => sound.unload());
       app?.destroy(true, { children: true });
@@ -115,7 +136,7 @@ export default function Home() {
         className={`keyboard-prompt${hasPressedKey ? " keyboard-prompt--dismissed" : ""}`}
         role="status"
       >
-        Press any key from A to Z, and turn up the speakers
+        Tap anywhere or press any key from A to Z, and turn up the speakers
       </p>
     </div>
   );
